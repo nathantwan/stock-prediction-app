@@ -1,26 +1,79 @@
-import logo from './logo.svg';
-import './App.css';
-import React from 'react';
+import React, { useState } from 'react';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const StockPrediction = () => {
+    const [ticker, setTicker] = useState('');
+    const [time, setTime] = useState('');
+    const [prediction, setPrediction] = useState(null);
+    const [error, setError] = useState(null);
 
-export default App;
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null); // Reset error state
+
+        try {
+            const response = await fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ticker, time: parseInt(time) })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                setPrediction(result.predictions);
+            } else {
+                setError(result.error);
+            }
+        } catch (err) {
+            setError('An unexpected error occurred.');
+        }
+    };
+
+    return (
+        <div>
+            <h1>Stock Prediction</h1>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>
+                        Ticker:
+                        <input 
+                            type="text" 
+                            value={ticker} 
+                            onChange={(e) => setTicker(e.target.value)} 
+                            required 
+                        />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Time (days):
+                        <input 
+                            type="number" 
+                            value={time} 
+                            onChange={(e) => setTime(e.target.value)} 
+                            required 
+                        />
+                    </label>
+                </div>
+                <button type="submit">Get Prediction</button>
+            </form>
+
+            {prediction && (
+                <div>
+                    <h2>Prediction</h2>
+                    <p>{prediction}</p>
+                </div>
+            )}
+
+            {error && (
+                <div>
+                    <h2>Error</h2>
+                    <p>{error}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default StockPrediction;
